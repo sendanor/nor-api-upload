@@ -1,6 +1,6 @@
 {
   "name": "nor-api-upload",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Upload API module",
   "main": "src/index.js",
   "scripts": {
@@ -24,7 +24,7 @@
     "nor-data":        ">= 0.0.11  < 0.1.0",
     "nor-is":          ">= 0.1.14 < 0.2.0",
     "nor-fs":          ">= 0.1.10  < 0.2.0",
-    "nor-ref":         ">= 0.1.0  < 0.2.0",
+    "nor-ref":         ">= 0.1.1  < 0.2.0",
     "nor-api-helpers": ">= 0.1.4  < 0.2.0",
     "multiparty":      ">= 3.3.2  < 3.4.0",
     "easyimage":       ">= 1.0.2  < 1.1.0"
