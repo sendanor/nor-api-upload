@@ -12,6 +12,7 @@ var ref = require('nor-ref');
 var multiparty = require('./multiparty.js');
 var helpers = require('nor-api-helpers');
 var easyimage = require('easyimage');
+var ARRAY = require('nor-array');
 
 /** Returns nor-express based upload resource
  * @fixme Implement param opts.path to change the default /api/upload
@@ -24,7 +25,7 @@ var easyimage = require('easyimage');
  * @param opts.resize.w {number} Optional. Resize to spesific width.
  * @param opts.resize.h {number} Optional. Resize to spesific height.
  */
-var upload_builder = module.exports = function upload_builder(opts) {
+module.exports = function upload_builder(opts) {
 	opts = opts || {};
 	debug.assert(opts).is('object');
 
@@ -96,7 +97,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 			var files = [];
 
 			// Enable file names
-			enabled_names.forEach(function(name) {
+			ARRAY(enabled_names).forEach(function(name) {
 				if(is.array(result.files[name])) {
 					files.push.apply(files, result.files[name]);
 				}
@@ -113,7 +114,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 
 				/* Get basic information about the original uploaded image */
 				if( opts.image ) {
-					return files.map(function(file) {
+					return ARRAY(files).map(function(file) {
 						debug.assert(file).is('object');
 						debug.assert(file.path).is('string');
 
@@ -133,7 +134,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 				//debug.log('opts.resize = ', opts.resize);
 				if( is.obj(opts.resize) && (is.defined(opts.resize.w) || is.defined(opts.resize.h)) ) {
 
-					return files.map(function(file) {
+					return ARRAY(files).map(function(file) {
 						debug.assert(file).is('object');
 						debug.assert(file.path).is('string');
 
@@ -168,7 +169,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 
 				/* Get basic information about the possibly resized image files */
 				if( opts.image ) {
-					return files.map(function(file) {
+					return ARRAY(files).map(function(file) {
 						debug.assert(file).is('object');
 						debug.assert(file.path).is('string');
 						return function step() {
@@ -182,7 +183,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 				}
 
 			}).then(function() {
-			
+
 				/* Create upload resource in the database */
 				return $Q(NoPg.start(opts.pg)
 				  .create(opts.upload_type)(data)
@@ -191,21 +192,21 @@ var upload_builder = module.exports = function upload_builder(opts) {
 					debug.assert(item).is('object');
 
 					/* Save files as an attachment in to the database */
-					return files.map(function(file) {
+					return ARRAY(files).map(function(file) {
 						debug.assert(file).is('object');
 						debug.assert(file.path).is('string');
-	
+
 						if(file.ws) {
 							delete file.ws;
 						}
-	
+
 						var meta = {
 							'name': file.originalFilename,
 							'content-type': file.headers['content-type'] || 'application/octet-stream',
 							'original': file,
 							'info': is.obj(file.info) ? file.info : {}
 						};
-	
+
 						return function step() {
 							return db.createAttachment(item)( file.path, meta);
 						};
@@ -214,7 +215,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 						/* Commit changes */
 
 						return db.commit();
-					
+
 					/* Redirect the user to the upload resource */
 					}).then(function() {
 						res.redirect(303, ref(req, 'api/upload', item.$id));
@@ -254,7 +255,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 
 			var results = [];
 
-			return attachments.map(function(a) {
+			return ARRAY(attachments).map(function(a) {
 				return function step() {
 					a.body = {
 						$ref: ref(req, 'api/upload', upload.$id, 'attachments', a.$id, 'body'),
@@ -331,7 +332,7 @@ var upload_builder = module.exports = function upload_builder(opts) {
 			res.end();
 
 		}));
-	
+
 	};
 
 	// Returns the resource

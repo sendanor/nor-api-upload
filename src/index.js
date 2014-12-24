@@ -1,2 +1,3 @@
+"use strict";
 
-var mod = module.exports = require('./upload.js');
+module.exports = require('./upload.js');
