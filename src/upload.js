@@ -67,7 +67,7 @@ module.exports = function upload_builder(opts) {
 	/** Returns user's uploaded files 
 	 * 
 	 */
-	routes.GET = function(req, res) {
+	routes.GET = function upload_get(req, res) {
 
 		var params = ["OR"];
 		if(req.user && req.user.$id) {
@@ -83,7 +83,7 @@ module.exports = function upload_builder(opts) {
 	};
 
 	/** Upload new file to the system */
-	routes.POST = function(req, res) {
+	routes.POST = function upload_post(req, res) {
 		return multiparty(req).then(function(result) {
 
 			//debug.log("fields = ", result.fields);
@@ -220,13 +220,15 @@ module.exports = function upload_builder(opts) {
 					}).then(function() {
 						res.redirect(303, ref(req, 'api/upload', item.$id));
 
-					/* Catch errors */
+					/* Handle errors */
 					}).fail(function(err) {
 						debug.error('Rolling back because of ', err);
-						db.rollback().fail(function(e) {
+						return db.rollback().then(function() {
+							return $Q.reject(err);
+						}).fail(function(e) {
 							debug.error('Rollback failed: ', e);
-						}).done();
-						throw err;
+							return $Q.reject(err);
+						});
 					});
 
 				})); // End of return $Q(NoPg.start(opts.pg) ...
@@ -293,15 +295,15 @@ module.exports = function upload_builder(opts) {
 
 		var upload_uuid = helpers.get_param(req, 'uuid');
 		var attachment_uuid = helpers.get_param(req, 'uuid2');
-	
+
 		//debug.log('upload_uuid =', upload_uuid);
 		//debug.log('attachment_uuid =', attachment_uuid);
-		
+
 		debug.assert(upload_uuid).typeOf('string');
 		debug.assert(attachment_uuid).typeOf('string');
 
 		var body;
-	
+
 		return $Q(NoPg.start(opts.pg)
 		  .search(opts.upload_type)({'$id': upload_uuid}, {'fields':['$id', '$type', '$created', 'user']}).then(function(db) {
 			var files = db.fetch();
@@ -309,13 +311,13 @@ module.exports = function upload_builder(opts) {
 			if(files.length !== 1) {
 				throw new TypeError("Too much or few upload records: ", files.length);
 			}
-	
+
 			body = files.shift();
 			debug.assert(body).typeOf('object');
 			return db.searchAttachments(body)({'$id': attachment_uuid }).commit();
 		  }).then(function(db) {
 			var attachments = db.fetch();
-	
+
 			if(attachments.length !== 1) {
 				throw new TypeError("Too much or few upload records: ", attachments.length);
 			}
