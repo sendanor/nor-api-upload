@@ -13,6 +13,7 @@ var multiparty = require('./multiparty.js');
 var helpers = require('nor-api-helpers');
 var easyimage = require('easyimage');
 var ARRAY = require('nor-array');
+var FUNCTION = require('nor-function');
 
 /** Returns nor-express based upload resource
  * @fixme Implement param opts.path to change the default /api/upload
@@ -99,7 +100,7 @@ module.exports = function upload_builder(opts) {
 			// Enable file names
 			ARRAY(enabled_names).forEach(function(name) {
 				if(is.array(result.files[name])) {
-					files.push.apply(files, result.files[name]);
+					FUNCTION(files.push).apply(files, result.files[name]);
 				}
 			});
 
