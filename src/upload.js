@@ -378,6 +378,9 @@ module.exports = function upload_builder(opts) {
 
 	};
 
+	routes[':uuid'].attachments.first.body[':filename'] = {};
+	routes[':uuid'].attachments.first.body[':filename'].GET = routes[':uuid'].attachments.first.body.GET;
+
 	// Returns the resource
 	return routes;
 }; // End of upload_builder
