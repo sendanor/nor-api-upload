@@ -290,6 +290,8 @@ module.exports = function upload_builder(opts) {
 	routes[':uuid'].attachments = {};
 	routes[':uuid'].attachments[':uuid2'] = {};
 	routes[':uuid'].attachments[':uuid2'].body = {};
+	routes[':uuid'].attachments.first = {};
+	routes[':uuid'].attachments.first.body = {};
 
 	/** Get single upload data */
 	routes[':uuid'].attachments[':uuid2'].body.GET = function(req, res) {
@@ -330,6 +332,44 @@ module.exports = function upload_builder(opts) {
 			var content_type = a['content-type'] || 'application/octet-stream';
 			//debug.log('content_type = ', content_type);
 
+			res.writeHead(200, {'Content-Type': content_type});
+			res.write(buffer);
+			res.end();
+
+		}));
+
+	};
+
+	/** Get single upload data */
+	routes[':uuid'].attachments.first.body.GET = function(req, res) {
+		var upload_uuid = helpers.get_param(req, 'uuid');
+		debug.assert(upload_uuid).typeOf('string');
+		var body;
+		return $Q(NoPg.start(opts.pg)
+		  .search(opts.upload_type)({'$id': upload_uuid}, {'fields':['$id', '$type', '$created', 'user']}).then(function(db) {
+			var files = db.fetch();
+			debug.assert(files).typeOf('object').instanceOf(Array);
+			if(files.length !== 1) {
+				throw new TypeError("Too much or few upload records: ", files.length);
+			}
+
+			body = files.shift();
+			debug.assert(body).typeOf('object');
+
+			return db.searchAttachments(body)(undefined, {
+				'order': ['$created'],
+				'limit':1
+			}).commit();
+		  }).then(function(db) {
+			var attachments = db.fetch();
+			if(attachments.length !== 1) {
+				throw new TypeError("Too much or few upload records: ", attachments.length);
+			}
+			var a = attachments.shift();
+			debug.assert(a).typeOf('object');
+			var buffer = a.getBuffer();
+			debug.assert(buffer).typeOf('object').instanceOf(Buffer);
+			var content_type = a['content-type'] || 'application/octet-stream';
 			res.writeHead(200, {'Content-Type': content_type});
 			res.write(buffer);
 			res.end();
